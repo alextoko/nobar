@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NOBAR</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script type="module" src="js/firebase.js"></script>
+<script type="module" src="js/app.js"></script>
+
+</head>
+<body>
+
+<header>
+
+<div class="logo">
+NOBAR
+</div>
+
+<div class="room-info">
+<span id="roomDisplay">Room: -</span>
+<span id="onlineCount">Online: 0</span>
+</div>
+
+</header>
+
+<div class="container">
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+<h3>Buat Room</h3>
+
+<input type="text"
+id="roomId"
+placeholder="Room ID">
+
+<input type="password"
+id="roomPassword"
+placeholder="Password Room">
+
+<input type="text"
+id="videoUrl"
+placeholder="Link Google Drive MP4">
+
+<button id="createRoomBtn">
+Buat Room
+</button>
+
+<hr>
+
+<h3>Gabung Room</h3>
+
+<input type="text"
+id="joinRoomId"
+placeholder="Room ID">
+
+<input type="password"
+id="joinPassword"
+placeholder="Password">
+
+<button id="joinRoomBtn">
+Gabung
+</button>
+
+<hr>
+
+<div class="user-box">
+
+<label>Nama Anda</label>
+
+<input type="text"
+id="username"
+placeholder="Nama">
+
+</div>
+
+</div>
+
+<!-- CONTENT -->
+
+<div class="content">
+
+<div class="video-wrapper">
+
+<video
+id="videoPlayer"
+controls
+playsinline>
+</video>
+
+<div class="video-actions">
+
+<button id="fullscreenBtn">
+Fullscreen
+</button>
+
+<button id="copyRoomBtn">
+Copy Link Room
+</button>
+
+</div>
+
+</div>
+
+<div class="bottom-section">
+
+<!-- CHAT -->
+
+<div class="chat-card">
+
+<div class="card-header">
+Chat Room
+</div>
+
+<div
+id="chatMessages"
+class="chat-messages">
+</div>
+
+<div class="chat-input">
+
+<input
+type="text"
+id="chatInput"
+placeholder="Ketik pesan...">
+
+<button id="sendMessageBtn">
+Kirim
+</button>
+
+</div>
+
+</div>
+
+<!-- USER LIST -->
+
+<div class="user-card">
+
+<div class="card-header">
+Peserta Online
+</div>
+
+<div id="userList">
+
+<div class="empty">
+Belum ada peserta
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- MODAL PASSWORD -->
+
+<div
+id="passwordModal"
+class="modal">
+
+<div class="modal-content">
+
+<h2>Password Room</h2>
+
+<input
+type="password"
+id="modalPassword"
+placeholder="Masukkan Password">
+
+<button id="submitPassword">
+Masuk
+</button>
+
+</div>
+
+</div>
+
+<!-- LOADING -->
+
+<div
+id="loading"
+class="loading hidden">
+
+<div class="spinner"></div>
+
+<p>Menghubungkan...</p>
+
+</div>
+
+</body>
+</html>
