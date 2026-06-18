@@ -18,183 +18,196 @@
 
 <header>
 
-<div class="logo">
-NOBAR
-</div>
+    <div class="logo">
+        NOBAR
+    </div>
 
-<div class="room-info">
-<span id="roomDisplay">Room: -</span>
-<span id="onlineCount">Online: 0</span>
-</div>
+    <div class="room-info">
+        <span id="roomDisplay">Room: -</span>
+        <span id="onlineCount">Online: 0</span>
+    </div>
 
 </header>
 
 <div class="container">
 
-<!-- SIDEBAR -->
+    <!-- SIDEBAR -->
+    <div class="sidebar">
 
-<div class="sidebar">
+        <!-- HOST PANEL -->
+        <div id="hostPanel">
 
-<h3>Buat Room</h3>
+            <h3>Buat Room</h3>
 
-<input type="text"
-id="roomId"
-placeholder="Room ID">
+            <input
+            type="text"
+            id="hostName"
+            placeholder="Nama Host">
 
-<input type="password"
-id="roomPassword"
-placeholder="Password Room">
+            <input
+            type="text"
+            id="roomId"
+            placeholder="Room ID">
 
-<input type="text"
-id="videoUrl"
-placeholder="Link Google Drive MP4">
+            <input
+            type="password"
+            id="roomPassword"
+            placeholder="Password Room">
 
-<button id="createRoomBtn">
-Buat Room
-</button>
+            <input
+            type="text"
+            id="videoUrl"
+            placeholder="Link Google Drive MP4">
 
-<hr>
+            <button id="createRoomBtn">
+                Buat Room
+            </button>
 
-<h3>Gabung Room</h3>
+            <hr>
 
-<input type="text"
-id="joinRoomId"
-placeholder="Room ID">
+        </div>
 
-<input type="password"
-id="joinPassword"
-placeholder="Password">
+        <!-- JOIN PANEL -->
+        <div id="joinPanel">
 
-<button id="joinRoomBtn">
-Gabung
-</button>
+            <h3>Gabung Room</h3>
 
-<hr>
+            <input
+            type="text"
+            id="username"
+            placeholder="Nama Anda">
 
-<div class="user-box">
+            <input
+            type="text"
+            id="joinRoomId"
+            placeholder="Room ID">
 
-<label>Nama Anda</label>
+            <input
+            type="password"
+            id="joinPassword"
+            placeholder="Password">
 
-<input type="text"
-id="username"
-placeholder="Nama">
+            <button
+            id="joinRoomBtn"
+            disabled>
+                Gabung
+            </button>
 
-</div>
+            <hr>
 
-</div>
+        </div>
 
-<!-- CONTENT -->
+    </div>
+    <!-- END SIDEBAR -->
 
-<div class="content">
+    <!-- CONTENT -->
+    <div class="content">
 
-<div class="video-wrapper">
+        <div class="video-wrapper">
 
-<video
-id="videoPlayer"
-controls
-playsinline>
-</video>
+            <video
+            id="videoPlayer"
+            controls
+            playsinline>
+            </video>
 
-<div class="video-actions">
+            <div class="video-actions">
 
-<button id="fullscreenBtn">
-Fullscreen
-</button>
+                <button id="fullscreenBtn">
+                    Fullscreen
+                </button>
 
-<button id="copyRoomBtn">
-Copy Link Room
-</button>
+                <button id="copyRoomBtn">
+                    Copy Link Room
+                </button>
 
-</div>
+            </div>
 
-</div>
+        </div>
 
-<div class="bottom-section">
+        <div class="bottom-section">
 
-<!-- CHAT -->
+            <!-- CHAT -->
+            <div class="chat-card">
 
-<div class="chat-card">
+                <div class="card-header">
+                    Chat Room
+                </div>
 
-<div class="card-header">
-Chat Room
-</div>
+                <div
+                id="chatMessages"
+                class="chat-messages">
+                </div>
 
-<div
-id="chatMessages"
-class="chat-messages">
-</div>
+                <div class="chat-input">
 
-<div class="chat-input">
+                    <input
+                    type="text"
+                    id="chatInput"
+                    placeholder="Ketik pesan...">
 
-<input
-type="text"
-id="chatInput"
-placeholder="Ketik pesan...">
+                    <button id="sendMessageBtn">
+                        Kirim
+                    </button>
 
-<button id="sendMessageBtn">
-Kirim
-</button>
+                </div>
 
-</div>
+            </div>
 
-</div>
+            <!-- USER LIST -->
+            <div class="user-card">
 
-<!-- USER LIST -->
+                <div class="card-header">
+                    Peserta Online
+                </div>
 
-<div class="user-card">
+                <div id="userList">
 
-<div class="card-header">
-Peserta Online
-</div>
+                    <div class="empty">
+                        Belum ada peserta
+                    </div>
 
-<div id="userList">
+                </div>
 
-<div class="empty">
-Belum ada peserta
-</div>
+            </div>
 
-</div>
+        </div>
 
-</div>
-
-</div>
-
-</div>
+    </div>
+    <!-- END CONTENT -->
 
 </div>
 
 <!-- MODAL PASSWORD -->
-
 <div
 id="passwordModal"
 class="modal">
 
-<div class="modal-content">
+    <div class="modal-content">
 
-<h2>Password Room</h2>
+        <h2>Password Room</h2>
 
-<input
-type="password"
-id="modalPassword"
-placeholder="Masukkan Password">
+        <input
+        type="password"
+        id="modalPassword"
+        placeholder="Masukkan Password">
 
-<button id="submitPassword">
-Masuk
-</button>
+        <button id="submitPassword">
+            Masuk
+        </button>
 
-</div>
+    </div>
 
 </div>
 
 <!-- LOADING -->
-
 <div
 id="loading"
 class="loading hidden">
 
-<div class="spinner"></div>
+    <div class="spinner"></div>
 
-<p>Menghubungkan...</p>
+    <p>Menghubungkan...</p>
 
 </div>
 
