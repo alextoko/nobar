@@ -27,28 +27,105 @@ set(ref(db, "test"), {
 const roomIdInput = document.getElementById("roomId");
 const roomPasswordInput = document.getElementById("roomPassword");
 const videoUrlInput = document.getElementById("videoUrl");
-
+const hostNameInput = document.getElementById("hostName");
 const joinRoomInput = document.getElementById("joinRoomId");
 const joinPasswordInput = document.getElementById("joinPassword");
-
 const usernameInput = document.getElementById("username");
-
 const createRoomBtn = document.getElementById("createRoomBtn");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
-
 const roomDisplay = document.getElementById("roomDisplay");
 const onlineCount = document.getElementById("onlineCount");
-
 const chatMessages = document.getElementById("chatMessages");
 const chatInput = document.getElementById("chatInput");
 const sendMessageBtn = document.getElementById("sendMessageBtn");
-
 const userList = document.getElementById("userList");
-
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 const copyRoomBtn = document.getElementById("copyRoomBtn");
-
 const videoPlayer = document.getElementById("videoPlayer");
+const hostPanel = document.getElementById("hostPanel");
+const joinPanel = document.getElementById("joinPanel");
+const urlParams = new URLSearchParams(location.search);
+const isHostPage = urlParams.get("host") === "1";
+
+if(isHostPage){
+
+    joinPanel.style.display = "none";
+
+}else{
+
+    hostPanel.style.display = "none";
+
+}
+
+if(isHostPage){
+
+    createRoomBtn.disabled = true;
+
+    function checkHostForm(){
+
+        createRoomBtn.disabled =
+            !hostNameInput?.value.trim() ||
+            !roomIdInput?.value.trim() ||
+            !roomPasswordInput?.value.trim() ||
+            !videoUrlInput?.value.trim();
+
+    }
+
+    hostNameInput?.addEventListener(
+        "input",
+        checkHostForm
+    );
+
+    roomIdInput?.addEventListener(
+        "input",
+        checkHostForm
+    );
+
+    roomPasswordInput?.addEventListener(
+        "input",
+        checkHostForm
+    );
+
+    videoUrlInput?.addEventListener(
+        "input",
+        checkHostForm
+    );
+
+    checkHostForm();
+
+}else if(
+    usernameInput &&
+    joinRoomInput &&
+    joinPasswordInput
+){
+
+    function checkJoinForm(){
+
+        joinRoomBtn.disabled =
+            !usernameInput.value.trim() ||
+            !joinRoomInput.value.trim() ||
+            !joinPasswordInput.value.trim();
+
+    }
+
+    usernameInput.addEventListener(
+        "input",
+        checkJoinForm
+    );
+
+    joinRoomInput.addEventListener(
+        "input",
+        checkJoinForm
+    );
+
+    joinPasswordInput.addEventListener(
+        "input",
+        checkJoinForm
+    );
+
+    checkJoinForm();
+
+}
 
 // ===========================
 // VARIABLE
@@ -58,11 +135,24 @@ let currentRoom = "";
 let isHost = false;
 let ignoreSync = false;
 
-const uid =
-    "user_" +
-    Math.random()
-    .toString(36)
-    .substring(2, 10);
+let uid = localStorage.getItem("uid");
+
+if (!uid) {
+
+    uid =
+        "user_" +
+        Math.random()
+        .toString(36)
+        .substring(2, 10);
+
+    localStorage.setItem(
+        "uid",
+        uid
+    );
+
+}
+
+console.log("UID =", uid);
 
 // ===========================
 // CREATE ROOM
@@ -79,30 +169,57 @@ createRoomBtn.addEventListener("click", async () => {
     const videoUrl =
         videoUrlInput.value.trim();
 
+    const hostName =
+        hostNameInput.value.trim() ||
+        "Host";
+
+    if (!hostNameInput.value.trim()) {
+        alert("Nama Host kosong");
+        return;
+    }
+
     if (!roomId) {
         alert("Room ID kosong");
+        return;
+    }
+
+    if (!password) {
+        alert("Password Room kosong");
+        return;
+    }
+
+    if (!videoUrl) {
+        alert("Link video kosong");
         return;
     }
 
     await set(
         ref(db, `rooms/${roomId}`),
         {
+            hostName,
             password,
             videoUrl,
             host: uid,
 
-            state:{
-                playing:false,
-                currentTime:0,
-                updatedAt:Date.now()
+            state: {
+                playing: false,
+                currentTime: 0,
+                updatedAt: Date.now()
             },
 
-            createdAt:Date.now()
+            createdAt: Date.now()
         }
     );
 
     currentRoom = roomId;
+
     isHost = true;
+
+    localStorage.setItem(
+        `host_${roomId}`,
+        "true"
+    );
+
     updateHostUI();
 
     roomDisplay.textContent =
@@ -153,7 +270,11 @@ joinRoomBtn.addEventListener("click", async () => {
     roomDisplay.textContent =
         "Room : " + roomId;
 
-    isHost = room.host === uid;
+    isHost =
+    localStorage.getItem(
+        `host_${roomId}`
+    ) === "true";
+
     updateHostUI();
 
     joinUser();
@@ -167,9 +288,21 @@ joinRoomBtn.addEventListener("click", async () => {
 
 function joinUser() {
 
-    const username =
-        usernameInput.value.trim() ||
-        "Guest";
+    let username;
+
+    if(isHostPage){
+
+        username =
+            hostNameInput?.value.trim() ||
+            "Host";
+
+    }else{
+
+        username =
+            usernameInput?.value.trim() ||
+            "Guest";
+
+    }
 
     const userRef =
         ref(
@@ -177,8 +310,9 @@ function joinUser() {
             `rooms/${currentRoom}/users/${uid}`
         );
 
-    set(userRef, {
-        name: username
+    set(userRef,{
+        name:username,
+        host:isHost
     });
 
     onDisconnect(userRef).remove();
@@ -234,6 +368,7 @@ function loadUsers() {
             </div>
 
             <div class="user-name">
+            ${user.host ? "👑 " : ""}
             ${user.name}
             </div>
             `;
@@ -278,9 +413,21 @@ function sendMessage() {
 
     if (!text) return;
 
-    const username =
-        usernameInput.value.trim() ||
-        "Guest";
+    let username;
+
+    if(isHostPage){
+
+        username =
+            hostNameInput?.value.trim() ||
+            "Host";
+
+    }else{
+
+        username =
+            usernameInput?.value.trim() ||
+            "Guest";
+
+    }
 
     push(
         ref(
@@ -537,7 +684,10 @@ const params =
 const roomParam =
     params.get("room");
 
-if (roomParam) {
+if (
+    roomParam &&
+    joinRoomInput
+) {
 
     joinRoomInput.value =
         roomParam;
