@@ -134,6 +134,7 @@ if(isHostPage){
 let currentRoom = "";
 let isHost = false;
 let ignoreSync = false;
+let hostStarted = false;
 
 let uid = localStorage.getItem("uid");
 
@@ -215,6 +216,10 @@ createRoomBtn.addEventListener("click", async () => {
 
     isHost = true;
 
+    console.log("HOST CREATED");
+    console.log("isHost =", isHost);
+    console.log("room =", roomId);
+
     localStorage.setItem(
         `host_${roomId}`,
         "true"
@@ -270,15 +275,13 @@ joinRoomBtn.addEventListener("click", async () => {
     roomDisplay.textContent =
         "Room : " + roomId;
 
-    isHost =
-    localStorage.getItem(
-        `host_${roomId}`
-    ) === "true";
+    isHost = false;
 
     updateHostUI();
 
     joinUser();
     loadRoom();
+    lockViewer();
 
 });
 
@@ -494,43 +497,133 @@ function loadChat() {
 
 function convertDriveUrl(url){
 
-    const match = url.match(/\/d\/([^\/]+)/);
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
 
-    if(!match) return url;
+    if(!match) return "";
 
     const fileId = match[1];
 
     const API_KEY = "AIzaSyD8BmFBsIS8jqM1z2XoQqGNbfgUryz89tY";
 
     return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
-
 }
 
 function loadVideo() {
 
-    const roomRef =
+    const videoRef =
         ref(
             db,
-            `rooms/${currentRoom}`
+            `rooms/${currentRoom}/videoUrl`
         );
 
-    onValue(roomRef, snap => {
+    onValue(videoRef, snap => {
 
-        if (!snap.exists()) return;
+        if(!snap.exists()) return;
 
-        const room =
+        const originalUrl =
             snap.val();
 
-        if(room.videoUrl){
+        const videoSrc =
+            convertDriveUrl(originalUrl);
 
-        videoPlayer.src =
-        convertDriveUrl(room.videoUrl);
+        console.log("Original URL :", originalUrl);
+        console.log("Video SRC :", videoSrc);
 
-}
+        if(videoPlayer.src !== videoSrc){
+
+            videoPlayer.pause();
+
+            videoPlayer.src = videoSrc;
+
+            videoPlayer.load();
+
+        }
 
     });
 
+    videoPlayer.addEventListener(
+    "loadedmetadata",
+    async () => {
+
+        if(isHost) return;
+
+        const snap = await get(
+            ref(db, `rooms/${currentRoom}/state`)
+        );
+
+        if(!snap.exists()) return;
+
+        const state = snap.val();
+
+        ignoreSync = true;
+
+        videoPlayer.currentTime =
+            state.currentTime;
+
+        if(state.playing){
+
+            await videoPlayer.play()
+            .catch(()=>{});
+
+        }else{
+
+            videoPlayer.pause();
+
+        }
+
+        setTimeout(() => {
+
+            ignoreSync = false;
+
+        },1000);
+
+    }
+);
+
 }
+
+// ===========================
+// VIDEO EVENT
+// ===========================
+
+videoPlayer.addEventListener(
+    "loadedmetadata",
+    () => {
+
+        console.log("Video Loaded");
+        console.log(
+            "Duration:",
+            videoPlayer.duration
+        );
+
+    }
+);
+
+videoPlayer.addEventListener(
+    "canplay",
+    () => {
+
+        console.log("Video Ready");
+
+    }
+);
+
+videoPlayer.addEventListener(
+    "error",
+    () => {
+
+        console.error(
+            "VIDEO ERROR",
+            videoPlayer.error
+        );
+
+        alert(
+            "Video gagal dimuat.\n\n" +
+            "Pastikan file Google Drive bersifat publik (Anyone with the link)."
+        );
+
+    }
+);
 
 function setupVideoSync(){
 
@@ -540,36 +633,77 @@ function setupVideoSync(){
     onValue(stateRef, snap => {
 
         if(!snap.exists()) return;
-
         if(isHost) return;
 
         const state = snap.val();
 
+        hostStarted = state.playing;
+
+        if(videoPlayer.readyState < 1){
+            return;
+        }
+
         ignoreSync = true;
 
-        if(
+        const drift =
             Math.abs(
                 videoPlayer.currentTime -
                 state.currentTime
-            ) > 2
-        ){
+            );
+
+        if(drift > 0.5){
+
             videoPlayer.currentTime =
                 state.currentTime;
+
         }
 
         if(state.playing){
-            videoPlayer.play();
+
+            videoPlayer.play()
+            .catch(()=>{});
+
         }else{
+
             videoPlayer.pause();
+
         }
 
-        setTimeout(()=>{
+        setTimeout(() => {
+
             ignoreSync = false;
-        },500);
+
+        },300);
 
     });
 
 }
+
+// ===========================
+// HOST TIME SYNC
+// ===========================
+
+setInterval(async () => {
+
+    if(!isHost) return;
+    if(!currentRoom) return;
+    if(videoPlayer.readyState < 2) return;
+
+    console.log(
+        "HOST SEND:",
+        videoPlayer.currentTime
+    );
+
+    await set(
+        ref(db, `rooms/${currentRoom}/state`),
+        {
+            playing: !videoPlayer.paused,
+            currentTime: videoPlayer.currentTime,
+            updatedAt: Date.now()
+        }
+    );
+
+}, 500);
 
 function updateHostUI(){
 
@@ -630,6 +764,10 @@ copyRoomBtn.addEventListener(
 
 videoPlayer.addEventListener("play", async ()=>{
 
+    console.log("PLAY EVENT");
+    console.log("isHost =", isHost);
+    console.log("currentRoom =", currentRoom);
+
     if(!isHost) return;
     if(ignoreSync) return;
 
@@ -641,6 +779,8 @@ videoPlayer.addEventListener("play", async ()=>{
             updatedAt:Date.now()
         }
     );
+
+    console.log("STATE UPDATED");
 
 });
 
@@ -691,5 +831,86 @@ if (
 
     joinRoomInput.value =
         roomParam;
+
+}
+
+function lockViewer(){
+
+    if(isHost) return;
+
+    videoPlayer.controls = false;
+
+    // cegah play manual
+    videoPlayer.addEventListener("play", () => {
+
+        if(ignoreSync) return;
+
+        if(!hostStarted){
+
+            videoPlayer.pause();
+
+        }
+
+    });
+
+    // cegah pause manual
+    videoPlayer.addEventListener("pause", () => {
+
+        if(ignoreSync) return;
+
+        get(
+            ref(db, `rooms/${currentRoom}/state`)
+        ).then(snap => {
+
+            if(!snap.exists()) return;
+
+            const state = snap.val();
+
+            if(state.playing){
+
+                ignoreSync = true;
+
+                videoPlayer.play()
+                .catch(()=>{});
+
+                setTimeout(() => {
+
+                    ignoreSync = false;
+
+                },300);
+
+            }
+
+        });
+
+    });
+
+    // cegah seek manual
+    videoPlayer.addEventListener("seeking", () => {
+
+        if(ignoreSync) return;
+
+        get(
+            ref(db, `rooms/${currentRoom}/state`)
+        ).then(snap => {
+
+            if(!snap.exists()) return;
+
+            const state = snap.val();
+
+            ignoreSync = true;
+
+            videoPlayer.currentTime =
+                state.currentTime;
+
+            setTimeout(() => {
+
+                ignoreSync = false;
+
+            },300);
+
+        });
+
+    });
 
 }
