@@ -503,7 +503,7 @@ function convertDriveUrl(url){
 
     const fileId = match[1];
 
-    const API_KEY = "AIzaSyD8BmFBsIS8jqM1z2XoQqGNbfgUryz89tY";
+    const API_KEY = "";
 
     return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
 }
