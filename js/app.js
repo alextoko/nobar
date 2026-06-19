@@ -495,19 +495,6 @@ function loadChat() {
 // LOAD VIDEO
 // ===========================
 
-function convertDriveUrl(url){
-
-    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-
-    if(!match) return "";
-
-    const fileId = match[1];
-
-    const API_KEY = "AIzaSyD8BmFBsIS8jqM1z2XoQqGNbfgUryz89tY";
-
-    return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${API_KEY}`;
-}
-
 function loadVideo() {
 
     const videoRef =
@@ -520,13 +507,8 @@ function loadVideo() {
 
         if(!snap.exists()) return;
 
-        const originalUrl =
-            snap.val();
+        const videoSrc = snap.val();
 
-        const videoSrc =
-            convertDriveUrl(originalUrl);
-
-        console.log("Original URL :", originalUrl);
         console.log("Video SRC :", videoSrc);
 
         if(videoPlayer.src !== videoSrc){
@@ -619,7 +601,7 @@ videoPlayer.addEventListener(
 
         alert(
             "Video gagal dimuat.\n\n" +
-            "Pastikan file Google Drive bersifat publik (Anyone with the link)."
+            "Pastikan URL video Cloudflare R2 dapat diakses publik."
         );
 
     }
