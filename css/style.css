@@ -29,6 +29,12 @@ header{
     border-bottom:1px solid #222;
 }
 
+.header-left{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
 .logo{
     color:#E50914;
     font-size:28px;
@@ -42,6 +48,101 @@ header{
     font-size:14px;
     color:#ccc;
 }
+
+/* =========================
+   FIFA HEADER
+========================= */
+
+.fifa-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    padding:8px 16px;
+
+    background:#111;
+
+    border:1px solid #E50914;
+
+    border-radius:10px;
+
+    text-decoration:none;
+
+    color:#fff;
+
+    transition:.25s;
+}
+
+.fifa-header:hover{
+
+    background:#E50914;
+
+    transform:translateY(-2px);
+
+    box-shadow:0 0 18px rgba(229,9,20,.45);
+
+}
+
+.fifa-icon{
+
+    font-size:24px;
+
+}
+
+.fifa-info{
+
+    display:flex;
+
+    flex-direction:column;
+
+    line-height:1.1;
+
+}
+
+.fifa-title{
+
+    font-size:15px;
+
+    font-weight:700;
+
+}
+
+.fifa-subtitle{
+
+    font-size:11px;
+
+    opacity:.75;
+
+}
+
+/* =========================
+   HEADER
+========================= */
+/*
+header{
+    height:70px;
+    background:#000;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 25px;
+    border-bottom:1px solid #222;
+}
+
+.logo{
+    color:#E50914;
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:2px;
+}
+
+.room-info{
+    display:flex;
+    gap:20px;
+    font-size:14px;
+    color:#ccc;
+}*/
+
 
 /* =========================
    LAYOUT
@@ -112,6 +213,7 @@ button{
     transition:.3s;
 }
 
+#endRoomBtn,
 #createRoomBtn,
 #joinRoomBtn{
     width:100%;
@@ -251,6 +353,25 @@ hr{
 
 .chat-input button:hover{
     background:#ff1723;
+}
+
+.user-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.user-name{
+    flex:1;
+}
+
+.user-role{
+    font-size:12px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:20px;
+    background:#2d2d2d;
+    color:#fff;
 }
 
 /* =========================
