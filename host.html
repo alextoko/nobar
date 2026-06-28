@@ -7,155 +7,195 @@
 
 <title>NOBAR HOST</title>
 
-<link rel="stylesheet" href="css/style.css">
-
+<link rel="stylesheet" href="css/style_host.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
 <script type="module" src="js/firebase.js"></script>
-
 <script type="module" src="js/host.js"></script>
 
 </head>
 <body>
 
 <header>
-
-<div class="logo">
-    NOBAR HOST
-</div>
-
-<div class="room-info">
-    <span id="roomDisplay">Room: -</span>
-    <span id="onlineCount">Online: -</span>
-</div>
-
+    <div class="logo">NOBAR HOST</div>
+        <div class="room-info">
+            <span id="roomDisplay">Room: -</span>
+            <span id="onlineCount">Online: -</span>
+        </div>
 </header>
 
-<div class="container">
+    <div class="container">
+        <div class="sidebar">
+            <div id="hostPanel">
+                <h3>Buat Room</h3>
+                <input type="text" id="hostName" placeholder="Nama Host">
+                <input type="text" id="roomId" placeholder="Room ID">
+                <input type="password" id="roomPassword" placeholder="Password Room">
+                <input type="text" id="videoUrl" placeholder="Link Film">
+                <button id="createRoomBtn">Buat Room</button>
+                <button id="endRoomBtn"style="display:none;">Akhiri Room</button>
+                <hr>
+            </div>
+        </div>
 
-<div class="sidebar">
+    <div class="content">
+        <div class="video-wrapper">
+            <video
+            id="videoPlayer"
+            controls
+            playsinline
+            preload="metadata"
+            crossorigin="anonymous">
+            </video>
 
-    <div id="hostPanel">
+            <div class="video-actions">
+                <button id="micBtn" class="tool-btn">🎤 Mic</button>
+                <button id="speakerBtn" class="tool-btn">🔊 Speaker</button>
+                <button id="toggleChatBtn" class="tool-btn">💬 Chat</button>
+                <button id="copyRoomBtn">Copy Link Room</button>
+                <button id="fullscreenBtn">Fullscreen</button>
+            </div>
+        </div>
 
-        <h3>Buat Room</h3>
+        <div class="playlist-card">
 
-        <input
-        type="text"
-        id="hostName"
-        placeholder="Nama Host">
+        <div class="playlist-header">
+            <div>
+                <h3>Playlist Media</h3>
+                <span>Kelola playlist M3U maupun film yang akan diputar.</span>
+            </div>
 
-        <input
-        type="text"
-        id="roomId"
-        placeholder="Room ID">
-
-        <input
-        type="password"
-        id="roomPassword"
-        placeholder="Password Room">
-
-        <input
-        type="text"
-        id="videoUrl"
-        placeholder="Link Film">
-
-        <button id="createRoomBtn">
-            Buat Room
-        </button>
-
-        <button id="endRoomBtn"
-            style="display:none;">
-            Akhiri Room
-        </button>
-
-        <hr>
-
-    </div>
-
-</div>
-
-<div class="content">
-
-    <div class="video-wrapper">
-
-        <video
-        id="videoPlayer"
-        controls
-        playsinline
-        preload="metadata"
-        crossorigin="anonymous">
-        </video>
-
-        <div class="video-actions">
-
-            <button id="fullscreenBtn">
-                Fullscreen
+            <button id="addPlaylistBtn">
+                + Tambah Playlist
             </button>
+        </div>
 
-            <button id="copyRoomBtn">
-                Copy Link Room
-            </button>
+        <div class="playlist-form">
+
+            <div class="playlist-input">
+                <label>URL Media</label>
+                <input
+                    type="text"
+                    id="m3uUrl"
+                    placeholder="https://domain.com/media.m3u8 atau .mp4">
+            </div>
+
+            <div class="playlist-input">
+                <label>Judul</label>
+                <input
+                    type="text"
+                    id="m3uTitle"
+                    placeholder="Contoh : Harry Potter / TV Nasional">
+            </div>
+
+            <div class="playlist-input">
+                <label>Jenis Media</label>
+
+                <select id="mediaType">
+
+                    <option value="m3u">Playlist M3U</option>
+
+                    <option value="movie">Film</option>
+
+                </select>
+
+            </div>
+
+            <div class="playlist-input">
+                <label>Jadwal</label>
+                <input
+                    type="datetime-local"
+                    id="m3uSchedule">
+            </div>
+
+            <div class="playlist-save">
+                <button id="savePlaylistBtn">Simpan</button>
+                <button id="updatePlaylistBtn" hidden>Update</button>
+            </div>
+
+        </div>
+
+        <div class="playlist-table">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th width="60">No</th>
+
+                        <th width="120">Jenis</th>
+
+                        <th>Judul</th>
+
+                        <th>URL</th>
+
+                        <th width="180">Jadwal</th>
+
+                        <th width="120">Status</th>
+
+                        <th width="150">Aksi</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="playlistBody">
+
+                    <tr>
+
+                        <td colspan="7">
+
+                            <div class="playlist-empty">
+
+                                📺
+
+                                <p>Belum ada playlist.</p>
+
+                                <small>
+                                    Tambahkan Playlist M3U atau Film.
+                                </small>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
 
         </div>
 
     </div>
 
     <div class="bottom-section">
-
         <div class="chat-card">
-
-            <div class="card-header">
-                Chat Room
-            </div>
-
-            <div
-            id="chatMessages"
-            class="chat-messages">
-            </div>
-
+            <div class="card-header">Chat Room</div>
+            <div id="chatMessages" class="chat-messages"></div>
             <div class="chat-input">
-
-                <input
-                type="text"
-                id="chatInput"
-                placeholder="Ketik pesan...">
-
-                <button id="sendMessageBtn">
-                    Kirim
-                </button>
-
+                <input type="text" id="chatInput" placeholder="Ketik pesan...">
+                <button id="sendMessageBtn">Kirim</button>
             </div>
-
         </div>
 
         <div class="user-card">
-
-            <div class="card-header">
-                Peserta Online
-            </div>
-
+            <div class="card-header">Peserta Online</div>
             <div id="userList">
-
-                <div class="empty">
-                    Belum ada peserta
-                </div>
-
+                <div class="empty">Belum ada peserta</div>
             </div>
-
         </div>
-
     </div>
-
+</div>
 </div>
 
-</div>
-
-<div id="loading" class="loading hidden">
-    <div class="spinner"></div>
-    <p>Menghubungkan...</p>
-</div>
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>Menghubungkan...</p>
+    </div>
 
 </body>
 </html>

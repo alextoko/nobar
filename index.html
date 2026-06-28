@@ -18,31 +18,19 @@
 <body>
 
 <header>
-
     <div class="header-left">
-
-        <div class="logo">
-            NOBAR
-        </div>
-
+        <div class="logo">NOBAR</div>
         <a
             href="https://starballtv09.blogspot.com/"
             target="_blank"
             class="fifa-header"
         >
             <span class="fifa-icon">🏆</span>
-
             <div class="fifa-info">
-                <div class="fifa-title">
-                    FIFA 2026™
-                </div>
-
-                <div class="fifa-subtitle">
-                    World Cup
-                </div>
+                <div class="fifa-title">FIFA 2026™</div>
+                <div class="fifa-subtitle">World Cup</div>
             </div>
         </a>
-
     </div>
 
     <div class="room-info">
@@ -56,11 +44,15 @@
     <div class="sidebar">
         <div id="joinPanel">
             <h3>Gabung Room</h3>
-            <input type="text" id="username" placeholder="Masuakan Namo">
+            <input type="text" id="username" placeholder="Username">
             <input type="text" id="joinRoomId" placeholder="Room ID = 123">
             <input type="password" id="joinPassword" placeholder="Password = 123">
             <button id="joinRoomBtn" disabled>Gabung</button>
             <hr>
+        </div>
+        <div id="roomControl" style="display:none">
+        <button id="leaveRoomBtn">Keluar Room</button>
+        <button id="refreshVideoBtn">Refresh Video</button>
         </div>
 </div>
 
@@ -75,6 +67,9 @@
         </video>
 
         <div class="video-actions">
+            <button id="micBtn" class="tool-btn">🎤 Mic</button>
+            <button id="speakerBtn" class="tool-btn">🔊 Speaker</button>
+            <button id="toggleChatBtn" class="tool-btn">💬 Chat</button>
             <button id="fullscreenBtn">Fullscreen</button>
         </div>
     </div>
