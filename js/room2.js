@@ -11,7 +11,10 @@ import {
     joinPasswordInput,
     usernameInput,
     joinRoomBtn,
-    roomDisplay
+    roomDisplay,
+    roomControl,
+    leaveRoomBtn,
+    joinPanel
 } from "./elements2.js";
 
 // ===========================
@@ -24,20 +27,9 @@ export function initJoinForm(){
 
     checkJoinForm();
 
-    usernameInput.addEventListener(
-        "input",
-        checkJoinForm
-    );
-
-    joinRoomInput.addEventListener(
-        "input",
-        checkJoinForm
-    );
-
-    joinPasswordInput.addEventListener(
-        "input",
-        checkJoinForm
-    );
+    usernameInput.addEventListener("input", checkJoinForm);
+    joinRoomInput.addEventListener("input", checkJoinForm);
+    joinPasswordInput.addEventListener("input", checkJoinForm);
 
 }
 
@@ -62,80 +54,54 @@ export function initJoinRoom(
     lockViewer
 ){
 
-    joinRoomBtn.addEventListener(
-        "click",
-        async () => {
+    joinRoomBtn.addEventListener("click", async () => {
 
-            const roomId =
-                joinRoomInput.value.trim();
+        const roomId = joinRoomInput.value.trim();
+        const password = joinPasswordInput.value.trim();
 
-            const password =
-                joinPasswordInput.value.trim();
-
-            if(!roomId){
-
-                alert(
-                    "Masukkan Room ID"
-                );
-
-                return;
-
-            }
-
-            const snap =
-                await get(
-                    ref(
-                        db,
-                        `rooms/${roomId}`
-                    )
-                );
-
-            if(!snap.exists()){
-
-                alert(
-                    "Room tidak ditemukan"
-                );
-
-                return;
-
-            }
-
-            const room =
-                snap.val();
-
-            if(
-                room.password !==
-                password
-            ){
-
-                alert(
-                    "Password salah"
-                );
-
-                return;
-
-            }
-
-            setCurrentRoom(roomId);
-
-            roomDisplay.textContent =
-                "Room : " + roomId;
-
-            updateViewerUI();
-
-            joinUser();
-
-            loadRoom();
-
-            lockViewer();
-
-            watchRoomEnded(
-                () => roomId
-            );
-
+        if(!roomId){
+            alert("Masukkan Room ID");
+            return;
         }
 
-    );
+        const snap = await get(
+            ref(db, `rooms/${roomId}`)
+        );
+
+        if(!snap.exists()){
+            alert("Room tidak ditemukan");
+            return;
+        }
+
+        const room = snap.val();
+
+        if(room.password !== password){
+            alert("Password salah");
+            return;
+        }
+
+        setCurrentRoom(roomId);
+
+        roomDisplay.textContent =
+            "Room : " + roomId;
+
+        updateViewerUI();
+
+        joinUser();
+
+        loadRoom();
+
+        lockViewer();
+
+        // Sembunyikan form join
+        joinPanel.style.display = "none";
+
+        // Tampilkan tombol kontrol
+        roomControl.style.display = "flex";
+
+        watchRoomEnded(() => roomId);
+
+    });
 
 }
 
@@ -143,28 +109,37 @@ export function initJoinRoom(
 // ROOM ENDED
 // ===========================
 
-export function watchRoomEnded(
-    getCurrentRoom
-){
+export function watchRoomEnded(getCurrentRoom){
 
     onValue(
-        ref(
-            db,
-            `rooms/${getCurrentRoom()}/ended`
-        ),
+        ref(db, `rooms/${getCurrentRoom()}/ended`),
         snap => {
 
             if(!snap.exists()) return;
 
             if(!snap.val()) return;
 
-            alert(
-                "Host telah mengakhiri room"
-            );
+            alert("Host telah mengakhiri room");
 
             location.reload();
 
         }
     );
+
+}
+
+// ===========================
+// LEAVE ROOM
+// ===========================
+
+export function initLeaveRoom(){
+
+    leaveRoomBtn.addEventListener("click", () => {
+
+        if(!confirm("Keluar dari room?")) return;
+
+        location.reload();
+
+    });
 
 }

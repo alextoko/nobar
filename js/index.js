@@ -1,98 +1,164 @@
+// ========================================
+// index.js
+// Viewer v2
+// Part 1 - Initialization
+// ========================================
+
 import { db } from "./firebase.js";
-import {
-    joinRoomInput,
-    joinPasswordInput,
-    usernameInput,
-    joinRoomBtn,
-    roomDisplay,
-    onlineCount,
-    chatMessages,
-    chatInput,
-    sendMessageBtn,
-    userList,
-    fullscreenBtn,
-    videoPlayer
-} from "./elements2.js";
 
 import {
-ref,
-set,
-get,
-push,
-onValue,
-onChildAdded,
-onDisconnect
+    ref,
+    set,
+    get,
+    onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 import {
+
+    videoPlayer,
+
+    refreshVideoBtn,
+
+    fullscreenBtn,
+
+    roomDisplay,
+
+    joinRoomBtn,
+
+    joinRoomInput,
+
+    joinPasswordInput,
+
+    usernameInput,
+
+    onlineCount,
+
+    chatMessages,
+
+    chatInput,
+
+    sendMessageBtn,
+
+    userList
+
+} from "./elements2.js";
+
+import {
+
     joinUser,
     loadUsers
+
 } from "./users.js";
 
 import {
+
     initChat,
     loadChat
+
 } from "./chat.js";
 
 import {
+
     initJoinForm,
-    initJoinRoom
+    initJoinRoom,
+    initLeaveRoom
+
 } from "./room2.js";
 
 import {
+
     updateViewerUI,
     initFullscreenViewer,
     initAutoJoin
+
 } from "./ui.js";
 
-console.log("Firebase Connected");
-console.log(db);
+import {
 
-// ===========================
-// VARIABLE
-// ===========================
+    log,
+    warn,
+    error
+
+} from "./logger.js";
+
+// ========================================
+// GLOBAL
+// ========================================
 
 let currentRoom = "";
+
 let isHost = false;
+
 let ignoreSync = false;
+
 let hostStarted = false;
+
 let hls = null;
 
-let uid =
-localStorage.getItem("uid");
+let currentMedia = null;
 
-if(!uid){
+// ========================================
+// UID
+// ========================================
 
+let uid = localStorage.getItem("uid");
 
-uid =
-    "user_" +
-    Math.random()
-    .toString(36)
-    .substring(2,10);
+if (!uid) {
 
-localStorage.setItem(
-    "uid",
-    uid
-);
+    uid =
+        "user_" +
+        Math.random()
+        .toString(36)
+        .substring(2, 10);
+
+    localStorage.setItem(
+        "uid",
+        uid
+    );
+
 }
 
+log("Viewer UID :", uid);
+
+// ========================================
+// INIT
+// ========================================
+
 initFullscreenViewer();
+
 initAutoJoin();
+
 initChat(() => currentRoom);
+
 initJoinForm();
+
+initLeaveRoom();
+
+// ========================================
+// JOIN ROOM
+// ========================================
 
 initJoinRoom(
 
-    (roomId)=>{
+    (roomId) => {
+
         currentRoom = roomId;
+
+        log("Joined Room :", currentRoom);
+
     },
 
     updateViewerUI,
 
-    ()=>joinUser(
-        currentRoom,
-        uid
-    ),
+    () =>
+
+        joinUser(
+
+            currentRoom,
+
+            uid
+
+        ),
 
     loadRoom,
 
@@ -100,337 +166,459 @@ initJoinRoom(
 
 );
 
-// ===========================
+// ========================================
 // LOAD ROOM
-// ===========================
+// ========================================
 
-function loadRoom(){
+function loadRoom() {
 
-loadUsers(currentRoom);
-loadChat(currentRoom);
-loadVideo();
-setupVideoSync();
+    log("Loading Room...");
+
+    loadUsers(currentRoom);
+
+    loadChat(currentRoom);
+
+    loadVideo();
+
+    setupVideoSync();
 
 }
 
-// ===========================
+// ========================================
 // LOAD VIDEO
-// ===========================
+// ========================================
 
-function loadVideo(){
+function loadVideo() {
 
-
-const videoRef =
-    ref(
+    const mediaRef = ref(
         db,
-        `rooms/${currentRoom}/videoUrl`
+        `rooms/${currentRoom}/media/current`
     );
 
-onValue(
-    videoRef,
-    snap => {
+    onValue(mediaRef, async (snap) => {
 
-        if(!snap.exists()) return;
+        if (!snap.exists()) {
 
-        const videoSrc =
-            snap.val();
+            warn("Belum ada media.");
 
-        console.log(
-            "Video SRC :",
-            videoSrc
-        );
+            return;
 
-        if(hls){
+        }
+
+        const media = snap.val();
+
+        currentMedia = media;
+
+        const videoSrc = media.url;
+        const mediaType = media.type;
+        const mediaTitle = media.title;
+
+        log("MEDIA :", mediaTitle);
+        log("TYPE  :", mediaType);
+        log("URL   :", videoSrc);
+
+        if (!videoSrc) return;
+
+        // Hindari reload jika URL sama
+        if (videoPlayer.dataset.src === videoSrc) {
+
+            return;
+
+        }
+
+        videoPlayer.dataset.src = videoSrc;
+
+        // Bersihkan HLS sebelumnya
+        if (hls) {
 
             hls.destroy();
+
             hls = null;
 
         }
 
         videoPlayer.pause();
 
-        if(
-            videoSrc.includes(
-                ".m3u8"
-            )
-        ){
+        // =====================================
+        // HLS (.m3u8)
+        // =====================================
 
-            if(
-                Hls.isSupported()
-            ){
+        if (videoSrc.includes(".m3u8")) {
 
-                hls =
-                    new Hls({
+            log("Loading HLS...");
 
-                    enableWorker:true,
-                    lowLatencyMode:true
+            if (Hls.isSupported()) {
+
+                hls = new Hls({
+
+                    enableWorker: true,
+
+                    lowLatencyMode: true
 
                 });
 
-                hls.loadSource(
-                    videoSrc
+                hls.loadSource(videoSrc);
+
+                hls.attachMedia(videoPlayer);
+
+                hls.on(
+
+                    Hls.Events.MANIFEST_PARSED,
+
+                    async () => {
+
+                        try {
+
+                            const stateSnap = await get(
+
+                                ref(
+                                    db,
+                                    `rooms/${currentRoom}/state`
+                                )
+
+                            );
+
+                            if (stateSnap.exists()) {
+
+                                const state = stateSnap.val();
+
+                                ignoreSync = true;
+
+                                videoPlayer.currentTime =
+                                    state.currentTime || 0;
+
+                                if (state.playing) {
+
+                                    await videoPlayer.play();
+
+                                }
+
+                                setTimeout(() => {
+
+                                    ignoreSync = false;
+
+                                }, 300);
+
+                            }
+
+                            log("Viewer Ready");
+
+                        } catch (err) {
+
+                            error(err);
+
+                        }
+
+                    }
+
                 );
 
-                hls.attachMedia(
-                    videoPlayer
+                hls.on(
+
+                    Hls.Events.ERROR,
+
+                    (event, data) => {
+
+                        error("========== HLS ERROR ==========");
+
+                        error(data);
+
+                    }
+
                 );
 
             }
-            else if(
+
+            else if (
+
                 videoPlayer.canPlayType(
-                    "application/vnd.apple.mpegurl"
-                )
-            ){
 
-                videoPlayer.src =
-                    videoSrc;
+                    "application/vnd.apple.mpegurl"
+
+                )
+
+            ) {
+
+                videoPlayer.src = videoSrc;
 
             }
 
-        }else{
+        }
 
-            videoPlayer.src =
-                videoSrc;
+        // =====================================
+        // MP4
+        // =====================================
+
+        else {
+
+            videoPlayer.src = videoSrc;
 
             videoPlayer.load();
 
-        }
+            videoPlayer.addEventListener(
 
-    }
-);
+                "loadedmetadata",
 
-videoPlayer.addEventListener(
-    "loadedmetadata",
-    async () => {
+                async () => {
 
-        const snap =
-            await get(
-                ref(
-                    db,
-                    `rooms/${currentRoom}/state`
-                )
+                    try {
+
+                        const stateSnap = await get(
+
+                            ref(
+                                db,
+                                `rooms/${currentRoom}/state`
+                            )
+
+                        );
+
+                        if (!stateSnap.exists()) return;
+
+                        const state = stateSnap.val();
+
+                        ignoreSync = true;
+
+                        videoPlayer.currentTime =
+                            state.currentTime || 0;
+
+                        if (state.playing) {
+
+                            await videoPlayer.play();
+
+                        }
+
+                        setTimeout(() => {
+
+                            ignoreSync = false;
+
+                        }, 300);
+
+                    }
+
+                    catch (err) {
+
+                        error(err);
+
+                    }
+
+                },
+
+                { once: true }
+
             );
 
-        if(!snap.exists()) return;
-
-        const state =
-            snap.val();
-
-        ignoreSync = true;
-
-        videoPlayer.currentTime =
-            state.currentTime;
-
-        if(state.playing){
-
-            await videoPlayer
-                .play()
-                .catch(()=>{});
-
-        }else{
-
-            videoPlayer.pause();
-
         }
 
-        setTimeout(
-            () => {
-
-                ignoreSync = false;
-
-            },
-            1000
-        );
-
-    }
-);
-
+    });
 
 }
 
-// ===========================
+// ========================================
 // VIDEO SYNC
-// ===========================
+// ========================================
 
-function setupVideoSync(){
+function setupVideoSync() {
 
-
-const stateRef =
-    ref(
+    const stateRef = ref(
         db,
         `rooms/${currentRoom}/state`
     );
 
-onValue(
-    stateRef,
-    snap => {
+    onValue(stateRef, async (snap) => {
 
-        if(!snap.exists()) return;
+        if (!snap.exists()) return;
 
-        const state =
-            snap.val();
+        const state = snap.val();
 
-        hostStarted =
-            state.playing;
+        hostStarted = state.playing;
 
-        if(
-            videoPlayer.readyState < 1
-        ){
+        // Tunggu video siap
+        if (videoPlayer.readyState < 1) {
+
             return;
+
         }
 
         ignoreSync = true;
 
-        const drift =
-            Math.abs(
-                videoPlayer.currentTime -
+        // =====================================
+        // SYNC CURRENT TIME
+        // =====================================
+
+        const drift = Math.abs(
+
+            videoPlayer.currentTime -
+
+            state.currentTime
+
+        );
+
+        if (drift > 0.5) {
+
+            log(
+                "SYNC TIME :",
+                videoPlayer.currentTime,
+                "->",
                 state.currentTime
             );
-
-        if(drift > 0.5){
 
             videoPlayer.currentTime =
                 state.currentTime;
 
         }
 
-        if(state.playing){
+        // =====================================
+        // PLAY / PAUSE
+        // =====================================
 
-            videoPlayer
-                .play()
-                .catch(()=>{});
+        try {
 
-        }else{
+            if (state.playing) {
 
-            videoPlayer.pause();
+                if (videoPlayer.paused) {
 
-        }
+                    await videoPlayer.play();
 
-        setTimeout(
-            () => {
+                    log("▶ Viewer Play");
 
-                ignoreSync = false;
+                }
 
-            },
-            300
-        );
+            } else {
 
-    }
-);
+                if (!videoPlayer.paused) {
 
+                    videoPlayer.pause();
 
-}
-
-// ===========================
-// LOCK VIEWER
-// ===========================
-
-function lockViewer(){
-
-
-videoPlayer.controls =
-    false;
-
-videoPlayer.addEventListener(
-    "play",
-    () => {
-
-        if(ignoreSync) return;
-
-        if(!hostStarted){
-
-            videoPlayer.pause();
-
-        }
-
-    }
-);
-
-videoPlayer.addEventListener(
-    "pause",
-    () => {
-
-        if(ignoreSync) return;
-
-        get(
-            ref(
-                db,
-                `rooms/${currentRoom}/state`
-            )
-        ).then(
-            snap => {
-
-                if(!snap.exists()) return;
-
-                const state =
-                    snap.val();
-
-                if(state.playing){
-
-                    ignoreSync =
-                        true;
-
-                    videoPlayer
-                        .play()
-                        .catch(()=>{});
-
-                    setTimeout(
-                        () => {
-
-                            ignoreSync =
-                                false;
-
-                        },
-                        300
-                    );
+                    log("⏸ Viewer Pause");
 
                 }
 
             }
-        );
 
-    }
-);
+        } catch (err) {
 
-videoPlayer.addEventListener(
-    "seeking",
-    () => {
+            error("Viewer Sync Error", err);
 
-        if(ignoreSync) return;
+        }
 
-        get(
-            ref(
-                db,
-                `rooms/${currentRoom}/state`
-            )
-        ).then(
-            snap => {
+        // =====================================
+        // RELEASE LOCK
+        // =====================================
 
-                if(!snap.exists()) return;
+        setTimeout(() => {
 
-                const state =
-                    snap.val();
+            ignoreSync = false;
 
-                ignoreSync =
-                    true;
+        }, 300);
+
+    });
+
+}
+
+// ========================================
+// LOCK VIEWER
+// ========================================
+
+function lockViewer() {
+
+    videoPlayer.controls = false;
+
+    // ===========================
+    // PLAY
+    // ===========================
+
+    videoPlayer.addEventListener(
+        "play",
+        () => {
+
+            if (ignoreSync) return;
+
+            if (!hostStarted) {
+
+                videoPlayer.pause();
+
+            }
+
+        }
+    );
+
+    // ===========================
+    // PAUSE
+    // ===========================
+
+    videoPlayer.addEventListener(
+        "pause",
+        () => {
+
+            if (ignoreSync) return;
+
+            get(
+                ref(
+                    db,
+                    `rooms/${currentRoom}/state`
+                )
+            ).then((snap) => {
+
+                if (!snap.exists()) return;
+
+                const state = snap.val();
+
+                if (state.playing) {
+
+                    ignoreSync = true;
+
+                    videoPlayer
+                        .play()
+                        .catch(() => {});
+
+                    setTimeout(() => {
+
+                        ignoreSync = false;
+
+                    }, 300);
+
+                }
+
+            });
+
+        }
+    );
+
+    // ===========================
+    // SEEK
+    // ===========================
+
+    videoPlayer.addEventListener(
+        "seeking",
+        () => {
+
+            if (ignoreSync) return;
+
+            get(
+                ref(
+                    db,
+                    `rooms/${currentRoom}/state`
+                )
+            ).then((snap) => {
+
+                if (!snap.exists()) return;
+
+                const state = snap.val();
+
+                ignoreSync = true;
 
                 videoPlayer.currentTime =
                     state.currentTime;
 
-                setTimeout(
-                    () => {
+                setTimeout(() => {
 
-                        ignoreSync =
-                            false;
+                    ignoreSync = false;
 
-                    },
-                    300
-                );
+                }, 300);
 
-            }
-        );
+            });
 
-    }
-);
+        }
+    );
 
 }

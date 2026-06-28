@@ -123,32 +123,47 @@ export function initCreateRoom(
                 {
                     hostName,
                     password,
-                    videoUrl,
                     host: uid,
+
+                    media: {
+                        current: {
+                            title: "Film Utama",
+                            url: videoUrl,
+                            type: "movie",
+                            status: "waiting",
+                            schedule: null,
+                            updatedAt: Date.now()
+                        }
+                    },
+
+                    playlist: {},
+                    settings:{
+                        autoSchedule:true,
+                        autoPlay:true,
+                        preBroadcast:true
+                    },
+
                     state: {
                         playing: false,
                         currentTime: 0,
                         updatedAt: Date.now()
                     },
+
                     createdAt: Date.now()
                 }
             );
 
             currentRoomSetter(roomId);
-
             createRoomBtn.style.display = "none";
             endRoomBtn.style.display = "block";
-
             console.log("HOST CREATED");
             console.log("room =", roomId);
-
             localStorage.setItem(
                 `host_${roomId}`,
                 "true"
             );
 
             updateHostUI();
-
             roomDisplay.textContent =
                 "Room : " + currentRoomGetter();
 
@@ -161,8 +176,6 @@ export function initCreateRoom(
             );
 
             alert("Room berhasil dibuat");
-
         }
     );
-
 }

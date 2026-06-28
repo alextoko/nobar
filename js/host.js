@@ -2,10 +2,23 @@ import { db } from "./firebase.js";
 import {ref,set,onValue} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import {videoPlayer} from "./elements.js";
 import {initHostForm,initCreateRoom} from "./room.js";
+import {
+    setCurrentRoom
+} from "./playlist/room.js";
+
+import {
+    startScheduler
+} from "./playlist/scheduler.js";
+
+import {
+    loadPlaylist
+} from "./playlist/loader.js";
+
 import {joinUser,loadUsers} from "./users.js";
 import {initChat,loadChat} from "./chat.js";
 import {initFullscreenHost,initCopyRoom,initEndRoom} from "./ui.js";
 import { log, warn, error } from "./logger.js";
+import "./playlist/index.js";
 
 log("Firebase Connected");
 log(db);
@@ -36,29 +49,46 @@ initChat(() => currentRoom);
 initFullscreenHost();
 initCopyRoom(() => currentRoom);
 initEndRoom(() => currentRoom);
-initCreateRoom(() => currentRoom,(room) => currentRoom = room,uid,() => joinUser(() => currentRoom, uid),() => loadUsers(() => currentRoom),() => loadChat(() => currentRoom),loadVideo,setupVideoSync);
+initCreateRoom(
+    () => currentRoom,
+    (room) => {
+
+        currentRoom = room;
+        setCurrentRoom(room);
+        loadPlaylist();
+        startScheduler();
+    }
+,uid,() => joinUser(() => currentRoom, uid),() => loadUsers(() => currentRoom),() => loadChat(() => currentRoom),loadVideo,setupVideoSync);
 
 function loadVideo() {
-const videoRef =
-    ref(
+
+    const mediaRef = ref(
         db,
-        `rooms/${currentRoom}/videoUrl`
+        `rooms/${currentRoom}/media/current`
     );
 
-onValue(videoRef, snap => {
-    if(!snap.exists()) return;
-    const videoSrc = snap.val();
-    log("Video SRC :", videoSrc);
+    onValue(mediaRef, (snap) => {
 
-    if(hls){
+        if (!snap.exists()) return;
 
-        hls.destroy();
-        hls = null;
+        const media = snap.val();
 
-    }
+        const videoSrc = media.url;
+        const mediaType = media.type;
+        const mediaTitle = media.title;
+
+        log("MEDIA :", mediaTitle);
+        log("TYPE  :", mediaType);
+        log("URL   :", videoSrc);
+
+        if (!videoSrc) return;
+
+        if (hls) {
+            hls.destroy();
+            hls = null;
+        }
 
     videoPlayer.pause();
-
     if(
         videoSrc.includes(".m3u8")
     ){
@@ -86,9 +116,21 @@ onValue(videoRef, snap => {
 
             hls.on(
                 Hls.Events.MANIFEST_PARSED,
-                () => {
+                async () => {
 
                     log("HLS READY");
+
+                    try {
+
+                        await videoPlayer.play();
+
+                        log("▶ Auto Play");
+
+                    } catch (err) {
+
+                        error("Auto Play gagal", err);
+
+                    }
 
                 }
             );
@@ -134,6 +176,22 @@ onValue(videoRef, snap => {
 
         videoPlayer.src = videoSrc;
         videoPlayer.load();
+
+        videoPlayer.onloadedmetadata = async () => {
+
+            try {
+
+                await videoPlayer.play();
+
+                log("▶ Auto Play");
+
+            } catch (err) {
+
+                error("Auto Play gagal", err);
+
+            }
+
+        };
     }
 });
 }
